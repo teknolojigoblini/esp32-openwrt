@@ -1,1 +1,51 @@
 
+name: Build ESP32 Firmware
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Arduino CLI
+      uses: arduino/setup-arduino-cli@v2
+
+    - name: Install ESP32 Core
+      run: |
+        arduino-cli config init
+        arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+        arduino-cli core update-index
+        arduino-cli core install esp32:esp32
+
+    - name: Install Libraries
+      run: |
+        arduino-cli lib install "WiFi"
+        arduino-cli lib install "WebServer"
+        arduino-cli lib install "SPIFFS"
+        arduino-cli lib install "HTTPClient"
+        arduino-cli lib install "Update"
+
+    - name: Find and rename sketch
+      run: |
+        if [ -f *.ino ]; then
+          cp *.ino sketch/
+          mkdir -p sketch
+          mv *.ino sketch/sketch.ino
+        fi
+
+    - name: Compile Firmware
+      run: |
+        arduino-cli compile --fqbn esp32:esp32:esp32 ./sketch -o firmware.bin
+
+    - name: Upload Firmware
+      uses: actions/upload-artifact@v4
+      with:
+        name: ESP32-Firmware
+        path: firmware.bin
