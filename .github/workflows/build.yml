@@ -26,22 +26,35 @@ jobs:
     - name: Prepare sketch
       run: |
         mkdir -p sketch
-        # .ino dosyasini bul ve sketch klasorune kopyala
+        # .ino veya .cpp dosyasini bul
         find . -maxdepth 1 -name "*.ino" -exec cp {} sketch/sketch.ino \;
-        # Eger .cpp uzantiliysa:
-        find . -maxdepth 1 -name "*.cpp" ! -name "build.*" -exec cp {} sketch/sketch.cpp \;
+        find . -maxdepth 1 -name "*.cpp" ! -name "build.*" -exec cp {} sketch/sketch.ino \;
+        # Dosya bulunamadiysa hata ver
+        if [ ! -f sketch/sketch.ino ]; then
+          echo "HATA: .ino veya .cpp dosyasi bulunamadi!"
+          ls -la .
+          exit 1
+        fi
+        echo "Bulunan dosya:"
+        ls -la sketch/
 
     - name: Compile Firmware
       run: |
-        # Once derleme klasorunu olustur
-        mkdir -p output
-        # Derle (eski surumlerde -o desteklenmez, ciktiyi build klasorunden alacagiz)
-        arduino-cli compile --fqbn esp32:esp32:esp32 ./sketch
-        # Derlenen .bin dosyasini output klasorune kopyala
-        find . -name "*.bin" -exec cp {} output/firmware.bin \;
+        # Derleme
+        arduino-cli compile --fqbn esp32:esp32:esp32 ./sketch --output-dir output
+        # Ciktiyi kontrol et
+        ls -la output/
 
     - name: Upload Firmware Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ESP32-Firmware
-        path: output/firmware.bin
+        path: output/*.bin
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: output/*.bin
+        generate_release_notes: true
+        name: "Release ${{ github.ref_name }}"
