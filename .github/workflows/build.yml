@@ -23,32 +23,25 @@ jobs:
         arduino-cli core update-index
         arduino-cli core install esp32:esp32
 
-    # BU ADIMI KALDIR - WiFi, WebServer, SPIFFS zaten ESP32 core'da var
-    # SADECE HARICI KÜTÜPHANELER GEREKİYORSA EKLE
-    # - name: Install Libraries
-    #   run: |
-    #     arduino-cli lib install "ArduinoJson"
-
     - name: Prepare sketch
       run: |
         mkdir -p sketch
+        # .ino dosyasini bul ve sketch klasorune kopyala
         find . -maxdepth 1 -name "*.ino" -exec cp {} sketch/sketch.ino \;
-        # Eğer .cpp uzantılıysa:
-        find . -maxdepth 1 -name "*.cpp" -exec cp {} sketch/sketch.cpp \;
+        # Eger .cpp uzantiliysa:
+        find . -maxdepth 1 -name "*.cpp" ! -name "build.*" -exec cp {} sketch/sketch.cpp \;
 
     - name: Compile Firmware
       run: |
-        arduino-cli compile --fqbn esp32:esp32:esp32 ./sketch -o firmware.bin
+        # Once derleme klasorunu olustur
+        mkdir -p output
+        # Derle (eski surumlerde -o desteklenmez, ciktiyi build klasorunden alacagiz)
+        arduino-cli compile --fqbn esp32:esp32:esp32 ./sketch
+        # Derlenen .bin dosyasini output klasorune kopyala
+        find . -name "*.bin" -exec cp {} output/firmware.bin \;
 
     - name: Upload Firmware Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ESP32-Firmware
-        path: firmware.bin
-
-    - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: softprops/action-gh-release@v1
-      with:
-        files: firmware.bin
-        generate_release_notes: true
+        path: output/firmware.bin
