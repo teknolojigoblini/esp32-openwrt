@@ -1,0 +1,11 @@
+{
+  "name": "ESP32 OpenWrt Complete",
+  "version": "23.5",
+  "build": "2026-04-25",
+  "size": 1053547,
+  "bootloader_url": "https://raw.githubusercontent.com/teknolojigoblini/esp32-openwrt/main/openwrt23.5b.bin",
+  "partitions_url": "https://raw.githubusercontent.com/teknolojigoblini/esp32-openwrt/main/openwrt23.5p.bin",
+  "firmware_url": "https://raw.githubusercontent.com/teknolojigoblini/esp32-openwrt/main/openwrt23.5.bin",
+  "release_notes": "OpenWrt 23.5",
+  "date": "2026-04-25"
+}
